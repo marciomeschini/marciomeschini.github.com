@@ -1,4 +1,25 @@
 baseURL = 'http://example.org/'
 languageCode = 'en-us'
-title = 'marco meschini'
+title = 'Yet another static website'
 theme = "etch"
+
+[params]
+	description = "Notes about iOS development"
+	copyright = "Copyright © 2021 Marco Meschini"
+	dark = "auto"
+	highlight = true
+	
+[menu]
+	[[menu.main]]
+		identifier = "posts"
+		name = "posts"
+		title = "posts"
+		url = "/"
+		weight = 10
+		
+	[[menu.main]]
+		identifier = "about"
+		name = "about"
+		title = "about"
+		url = "/about/"
+		weight = 20
