@@ -1,7 +1,6 @@
 ---
 title: "Hackathon"
 date: 2021-10-31T23:36:10Z
-draft: true
 ---
 
 # Intro
