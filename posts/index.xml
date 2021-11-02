@@ -2,22 +2,22 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on Yet another static website</title>
-    <link>http://example.org/posts/</link>
+    <link>https://marciomeschini.github.io/posts/</link>
     <description>Recent content in Posts on Yet another static website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 31 Oct 2021 23:36:10 +0000</lastBuildDate>
     
-	<atom:link href="http://example.org/posts/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://marciomeschini.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     
     
     
     <item>
       <title>Hackathon</title>
-      <link>http://example.org/posts/hackathon/</link>
+      <link>https://marciomeschini.github.io/posts/hackathon/</link>
       <pubDate>Sun, 31 Oct 2021 23:36:10 +0000</pubDate>
       
-      <guid>http://example.org/posts/hackathon/</guid>
+      <guid>https://marciomeschini.github.io/posts/hackathon/</guid>
       <description>&lt;h1 id=&#34;intro&#34;&gt;Intro&lt;/h1&gt;
 &lt;p&gt;A while ago me and my team built a small &lt;code&gt;Status Bar&lt;/code&gt; app to intercept deeplinks and to redirect them to both iOS Simulator and Android Emulator. Our mobile app already provides in-depth deeplink support, so the idea came natural: why use deeplink only for marketing?
 We can adopt deeplinks also to simplify several internal processes such as:&lt;/p&gt;
