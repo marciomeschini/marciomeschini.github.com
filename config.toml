@@ -1,4 +1,4 @@
-baseURL = 'http://example.org/'
+baseURL = 'https://marciomeschini.github.io'
 languageCode = 'en-us'
 title = 'Yet another static website'
 theme = "etch"
