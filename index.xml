@@ -1,1 +1,118 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Home on Yet another static website</title><link>http://example.org/</link><description>Recent content in Home on Yet another static website</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="http://example.org/index.xml" rel="self" type="application/rss+xml"/></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Home on Yet another static website</title><link>http://example.org/</link><description>Recent content in Home on Yet another static website</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sun, 31 Oct 2021 23:36:10 +0000</lastBuildDate><atom:link href="http://example.org/index.xml" rel="self" type="application/rss+xml"/><item><title>Hackathon</title><link>http://example.org/posts/hackathon/</link><pubDate>Sun, 31 Oct 2021 23:36:10 +0000</pubDate><guid>http://example.org/posts/hackathon/</guid><description>&lt;h1 id="intro">Intro&lt;/h1>
+&lt;p>A while ago me and my team built a small &lt;code>Status Bar&lt;/code> app to intercept deeplinks and to redirect them to both iOS Simulator and Android Emulator. Our mobile app already provides in-depth deeplink support, so the idea came natural: why use deeplink only for marketing?
+We can adopt deeplinks also to simplify several internal processes such as:&lt;/p>
+&lt;ul>
+&lt;li>backend environment selection&lt;/li>
+&lt;li>enter account credentials&lt;/li>
+&lt;/ul>
+&lt;p>We were lucky, we won. 🎉&lt;/p>
+&lt;p> &lt;/p>
+&lt;h1 id="target-platform">Target platform&lt;/h1>
+&lt;p>User can choose which platform to open the url with: either both platforms or one between iOS and Android.&lt;/p>
+&lt;p>We can use the following enum to model that and pass the values through an array:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-swift" data-lang="swift">&lt;span style="color:#66d9ef">enum&lt;/span> &lt;span style="color:#a6e22e">Platform&lt;/span> {
+&lt;span style="color:#66d9ef">case&lt;/span> android
+&lt;span style="color:#66d9ef">case&lt;/span> iOS
+}&lt;/code>&lt;/pre>&lt;/div>
+&lt;p>However we soon discover something:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-swift" data-lang="swift">&lt;span style="color:#66d9ef">var&lt;/span> platforms: [Platform]
+platforms = [.android]
+platforms = [.iOS]
+enabledPlatforms = [.android, .iOS, .iOS, .android] &lt;span style="color:#75715e">// 1. 🤔&lt;/span>
+enabledPlatforms = [] &lt;span style="color:#75715e">// 2. 😱&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
+&lt;p>To fix (1) we can use a &lt;code>Set&lt;/code> in place of an array however in order to address empty set (2) we need something different. We leave this topic for next time as now we want to focus on one specific problem: how to open the link and how to provide a good feedback to the call-site.&lt;/p>
+&lt;p>Let&amp;rsquo;s quickly address the &lt;strong>two impossible states&lt;/strong> and introduce a third case to our enum: &lt;code>both&lt;/code>. We closed the gate and client can not send bad requests anymore.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-swift" data-lang="swift">&lt;span style="color:#66d9ef">enum&lt;/span> &lt;span style="color:#a6e22e">Platform&lt;/span> {
+&lt;span style="color:#66d9ef">case&lt;/span> android
+&lt;span style="color:#66d9ef">case&lt;/span> both
+&lt;span style="color:#66d9ef">case&lt;/span> iOS
+}&lt;/code>&lt;/pre>&lt;/div>
+&lt;p> &lt;/p>
+&lt;h1 id="platform">Platform&lt;/h1>
+&lt;p>A platform represents an abstraction for both the iOS Simulator and the Android Emulator.&lt;/p>
+&lt;p>Behind the scenes we adopt two different tools: &lt;a href="https://nshipster.com/simctl/">simctl&lt;/a> and &lt;a href="https://developer.android.com/studio/command-line/adb">adb&lt;/a> respectively to interact with the two platforms but - for now - let&amp;rsquo;s not worry about these details. Let&amp;rsquo;s try instead to reduce the number of variables.&lt;/p>
+&lt;ol>
+&lt;li>We know that a user may or may not have a given platform installed, if so we want to return an error.&lt;/li>
+&lt;li>Once we have a platform available we want to invoke &lt;code>openURL&lt;/code> on that and eventually we want a result back. So also in that case we may want to return an error to the user.&lt;/li>
+&lt;/ol>
+&lt;p>Swift provides a standard type for this kind of requirements: the &lt;code>Result&lt;/code> type.
+We can add the following:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-swift" data-lang="swift">&lt;span style="color:#66d9ef">typealias&lt;/span> DeviceOpen = (URL) -&amp;gt; Result&amp;lt;Void, Error&amp;gt; &lt;span style="color:#75715e">// 2 &lt;/span>
+&lt;span style="color:#66d9ef">let&lt;/span> handler: () -&amp;gt; Result&amp;lt;DeviceOpen, Error&amp;gt; &lt;span style="color:#75715e">// 1&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
+&lt;p> &lt;/p>
+&lt;h2 id="the-controller">The Controller&lt;/h2>
+&lt;p>The &lt;code>OpenURLController&lt;/code> object hides the connection to the two platforms and exposes a single API.&lt;/p>
+&lt;ul>
+&lt;li>the &lt;code>URL&lt;/code> to open&lt;/li>
+&lt;li>the &lt;code>Platform&lt;/code> configuration, ie which devices to target&lt;/li>
+&lt;/ul>
+&lt;p>and returns back a &lt;code>Result&lt;/code> type.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-swift" data-lang="swift">&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">open&lt;/span>(&lt;span style="color:#66d9ef">_&lt;/span> url: URL, platform: Platform) -&amp;gt; Result&amp;lt;Void, Error&amp;gt;&lt;/code>&lt;/pre>&lt;/div>
+&lt;p>The &lt;code>Success&lt;/code> value for now can be &lt;code>Void&lt;/code> as we don&amp;rsquo;t need to carry extra information back during this post.&lt;/p>
+&lt;p>Every time &lt;code>open&lt;/code> function is called we want to get an handler for the required platform:&lt;/p>
+&lt;ul>
+&lt;li>something may happen between different executions&lt;/li>
+&lt;li>avoid storing states especially if it involves a third party command line tool&lt;/li>
+&lt;/ul>
+&lt;p>We can break down the amount of possible combinations with some nice ascii art:&lt;/p>
+&lt;pre tabindex="0">&lt;code>(URL, Platform) -&amp;gt; Result
+1 3 2
+2³ = 8 different paths
++----------+------+------+------+------+
+| Platform | | | | |
++==========+======+======+======+======+
+| Android | 1 | 0 | | |
++----------+------+------+------+------+
+| iOS | 1 | 0 | | |
++----------+------+------+------+------+
+| Both | 11 | 00 | 10 | 01 |
++----------+------+------+------+------+
+&lt;/code>&lt;/pre>&lt;p>8 different paths sound like a hell of a job but &lt;code>Result&lt;/code> type comes to the rescue.
+We are able to chain the 2 operations: get handler + open(url) with a &lt;code>flatMap&lt;/code>. The rest is done through a couple of &lt;code>switch&lt;/code>.&lt;/p>
+&lt;p>We don&amp;rsquo;t have any special requirement in terms of error handling, we just want to pass them up to the caller.&lt;/p>
+&lt;p>The full code is below, I added some comments to track the 8 different paths we do support.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-swift" data-lang="swift">&lt;span style="color:#66d9ef">struct&lt;/span> &lt;span style="color:#a6e22e">GroupError&lt;/span>: Error {
+&lt;span style="color:#66d9ef">let&lt;/span> errors: [Error]
+}
+&lt;span style="color:#66d9ef">struct&lt;/span> &lt;span style="color:#a6e22e">OpenURLController&lt;/span> {
+&lt;span style="color:#66d9ef">typealias&lt;/span> DeviceOpen = (URL) -&amp;gt; Result&amp;lt;Void, Error&amp;gt;
+&lt;span style="color:#66d9ef">let&lt;/span> android: () -&amp;gt; Result&amp;lt;DeviceOpen, Error&amp;gt;
+&lt;span style="color:#66d9ef">let&lt;/span> iOS: () -&amp;gt; Result&amp;lt;DeviceOpen, Error&amp;gt;
+&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">open&lt;/span>(&lt;span style="color:#66d9ef">_&lt;/span> url: URL, platform: Platform) -&amp;gt; Result&amp;lt;Void, Error&amp;gt; {
+&lt;span style="color:#66d9ef">switch&lt;/span> platform {
+&lt;span style="color:#66d9ef">case&lt;/span> .android:
+&lt;span style="color:#66d9ef">return&lt;/span> android().flatMap { $0(url) } &lt;span style="color:#75715e">// 1, 2&lt;/span>
+&lt;span style="color:#66d9ef">case&lt;/span> .both:
+&lt;span style="color:#66d9ef">switch&lt;/span> (android().flatMap { $0(url) }, iOS().flatMap { $0(url) }) {
+&lt;span style="color:#66d9ef">case&lt;/span> (.success, .success):
+&lt;span style="color:#66d9ef">return&lt;/span> .success(()) &lt;span style="color:#75715e">// 3&lt;/span>
+&lt;span style="color:#66d9ef">case&lt;/span> &lt;span style="color:#66d9ef">let&lt;/span> (.failure(iOS), .failure(android)):
+&lt;span style="color:#66d9ef">return&lt;/span> .failure(GroupError(errors: [iOS, android])) &lt;span style="color:#75715e">// 4&lt;/span>
+&lt;span style="color:#66d9ef">case&lt;/span> &lt;span style="color:#66d9ef">let&lt;/span> (.failure(error), .success), &lt;span style="color:#66d9ef">let&lt;/span> (.success, .failure(error)):
+&lt;span style="color:#66d9ef">return&lt;/span> .failure(error) &lt;span style="color:#75715e">// 5, 6&lt;/span>
+}
+&lt;span style="color:#66d9ef">case&lt;/span> .iOS:
+&lt;span style="color:#66d9ef">return&lt;/span> iOS().flatMap { $0(url) } &lt;span style="color:#75715e">// 7, 8&lt;/span>
+}
+}
+}&lt;/code>&lt;/pre>&lt;/div>
+&lt;p>We can then take the code for a ride with some old school print oriented debugging.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-swift" data-lang="swift">OpenURLController( &lt;span style="color:#75715e">// 🌧&lt;/span>
+android: { .failure(TestError.device) }, &lt;span style="color:#75715e">// ❌&lt;/span>
+iOS: { .success { &lt;span style="color:#66d9ef">_&lt;/span> &lt;span style="color:#66d9ef">in&lt;/span> .failure(TestError.open) } } &lt;span style="color:#75715e">// ✅ ❌&lt;/span>
+).open(url, platform: .both)
+OpenURLController( &lt;span style="color:#75715e">// 🌧&lt;/span>
+android: { .success { &lt;span style="color:#66d9ef">_&lt;/span> &lt;span style="color:#66d9ef">in&lt;/span> .failure(TestError.open) } }, &lt;span style="color:#75715e">// ✅ ❌&lt;/span>
+iOS: { .success { &lt;span style="color:#66d9ef">_&lt;/span> &lt;span style="color:#66d9ef">in&lt;/span> .success(()) } } &lt;span style="color:#75715e">// ✅ ✅&lt;/span>
+).open(url, platform: .both)
+OpenURLController( &lt;span style="color:#75715e">// ☀️&lt;/span>
+android: { .success { &lt;span style="color:#66d9ef">_&lt;/span> &lt;span style="color:#66d9ef">in&lt;/span> .failure(TestError.open) } }, &lt;span style="color:#75715e">// - -&lt;/span>
+iOS: { .success { &lt;span style="color:#66d9ef">_&lt;/span> &lt;span style="color:#66d9ef">in&lt;/span> .success(()) } } &lt;span style="color:#75715e">// ✅ ✅&lt;/span>
+).open(url, platform: .iOS)
+..&lt;/code>&lt;/pre>&lt;/div>
+&lt;p>And that was all for today, hope you did enjoy reading :)&lt;/p>
+&lt;h1 id="references">References&lt;/h1>
+&lt;ul>
+&lt;li>&lt;a href="https://fsharpforfunandprofit.com/rop/">Railway Oriented Programming&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://www.pointfree.co/collections/algebraic-data-types/algebraic-data-types">Pointfree: Algebraic Data Types&lt;/a>&lt;/li>
+&lt;/ul></description></item></channel></rss>
